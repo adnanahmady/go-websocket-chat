@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go websocket chat</title>
+    <script defer src="./alpine.js.3.15.1.min.js"></script>
+    <script src="./tailwind@4.js"></script>
+    <link rel="stylesheet" href="./style.css" type="text/css">
+    <style type="text/tailwindcss">
+        @theme {
+            --color-dark: #1f2937;
+            --color-dark-500: #1f2937;
+            --color-dark-900: #111827;
+
+            --color-chat: #f3f4f6;
+
+            --color-light: #f3f4f6;
+            --color-light-500: #f3f4f6;
+            --color-light-900: #e5e7eb;
+
+            --color-primary: #3b82f6;
+            --color-primary-500: #3b82f6;
+            --color-primary-900: #1e3a8a;
+
+            --color-info: #0ea5e9;
+            --color-info-500: #0ea5e9;
+            --color-info-900: #0c4a6e;
+
+            --color-success: #22c55e;
+            --color-success-500: #22c55e;
+            --color-success-900: #14532d;
+
+            --color-warning: #f59e42;
+            --color-warning-500: #f59e42;
+            --color-warning-900: #78350f;
+
+            --color-error: #ef4444;
+            --color-error-500: #ef4444;
+            --color-error-900: #7f1d1d;
+
+            --color-secondary: #6b7280;
+            --color-secondary-100: #e5e7eb;
+            --color-secondary-900: #111827;
+        }
+    </style>
+</head>
+
+<body>
+    <div x-data="data" class="container mx-auto flex flex-col h-screen">
+        <div class="row">
+            <div class="col-12">
+                <h1 x-text="title" class="text-3xl font-bold text-dark-900"></h1>
+                <hr class="my-4 text-secondary-100">
+                Welcome <span x-text="user" class="text-primary-500 font-bold"></span>
+                <hr class="my-4 text-secondary-100">
+            </div>
+        </div>
+        <div class="row flex-grow border-secondary-100 border-1 p-4 rounded-md mb-2 overflow-y-auto">
+            <div class="col-12">
+                <template x-for="msg in messages" :key="msg.id">
+                    <div class="flex flex-row mb-2" :class="{ 'flex-row-reverse': msg.operator === user }">
+                        <span x-text="msg.operator" class="text-secondary-500 font-bold text-xs my-auto"></span>
+                        <span x-text="msg.message" class="text-dark-500 text-sm px-2 py-1 rounded my-auto mx-2 w-1/4"
+                            :class="msg.operator === user ? 'text-light-500 bg-info' : 'text-dark-900 bg-light'">
+                        </span>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <div class="flex flex-row w-full items-center">
+            <input autofocus type="text" x-model="message" placeholder="Type your message..." @keyup.enter="sendMessage"
+                class="border w-full border-gray-200 rounded-md m-2 p-2 flex-grow text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            <button @click="sendMessage"
+                class="bg-primary-500 text-white px-4 py-2 m-2 cursor-pointer rounded-md hover:bg-primary-600 transition-colors duration-150">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            title: 'Go WebSocket Chat',
+            messages: [],
+            message: '',
+            counter: 0,
+            user: (() => {
+                let name = prompt("Enter your user name:", "");
+                if (!name || name.trim() === "") {
+                    name = "Guest";
+                }
+                return name;
+            })(),
+            ws: null,
+
+            init() {
+                this.ws = new WebSocket("ws://localhost:8080/ws");
+                this.ws.onopen = () => {
+                    console.log("WebSocket connected");
+                    this.messages.push({
+                        id: this.counter,
+                        operator: "System",
+                        message: `Dear ${this.user}, you're joined the chat`
+                    });
+                }
+                this.ws.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    console.log("message received:", message);
+                    this.counter++;
+                    message.id = this.counter;
+                    message.operator = message.operator === this.user ? "You" : message.operator;
+                    this.messages.push(message);
+                }
+                this.ws.onclose = (event) => {
+                    console.log("WebSocket disconnected", event);
+                    this.counter++;
+                    this.messages.push({
+                        id: this.counter,
+                        operator: "System",
+                        message: `Dear ${this.user}, you left the chat`
+                    });
+                }
+                this.ws.onerror = (event) => {
+                    console.log("WebSocket error", event);
+                    this.counter++;
+                    this.messages.push({
+                        id: this.counter,
+                        operator: "System",
+                        message: `Dear ${this.user}, there's an error in the chat`
+                    });
+                }
+            },
+
+            sendMessage() {
+                this.counter++;
+                this.messages.push({
+                    id: this.counter,
+                    operator: this.user,
+                    message: this.message
+                });
+                this.message = '';
+            }
+        }
+    </script>
+</body>
+
+</html>
