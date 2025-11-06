@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	App AppConfig `mapstructure:"app"`
+	Log LogConfig `mapstructure:"log"`
 }
 
 type AppConfig struct {
@@ -18,6 +19,10 @@ type AppConfig struct {
 	Env  string `mapstructure:"env"`
 	Host string `mapstructure:"host"`
 	Port int    `mapstructure:"port"`
+}
+
+type LogConfig struct {
+	ShowSource bool `mapstructure:"show_source"`
 }
 
 var cfg *Config
@@ -79,4 +84,5 @@ func loadEnvVariables() {
 	_ = viper.BindEnv("app.env", "APP_ENV")
 	_ = viper.BindEnv("app.host", "APP_HOST")
 	_ = viper.BindEnv("app.port", "APP_PORT")
+	_ = viper.BindEnv("log.show_source", "LOG_SHOW_SOURCE")
 }

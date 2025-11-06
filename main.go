@@ -1,15 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"github.com/adnanahmady/go-websocket-chat/config"
+	"log"
 )
 
 func main() {
-	cfg := config.GetConfig()
+	ps, err := WireUpApp()
+	if err != nil {
+		log.Fatalf("failed to wire up the application dependencies")
+	}
 
-	fmt.Printf("App Name: %s\n", cfg.App.Name)
-	fmt.Printf("Port: %d\n", cfg.App.Port)
-	fmt.Printf("Host: %s\n", cfg.App.Host)
-	fmt.Printf("Env: %s\n", cfg.App.Env)
+	ps.Logger.Info("App Name: %s", ps.Config.App.Name)
+	ps.Logger.Info(
+		"Application port is correctly set",
+		"port", ps.Config.App.Port,
+	)
+	ps.Logger.Info("Host: %s", ps.Config.App.Host)
+	ps.Logger.Info("Env: %s", ps.Config.App.Env)
 }
