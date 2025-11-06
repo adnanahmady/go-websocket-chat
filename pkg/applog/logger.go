@@ -24,10 +24,23 @@ type AppLogger struct {
 func NewAppLogger(cfg *config.Config) *AppLogger {
 	return &AppLogger{
 		lgr: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level:     slog.LevelInfo,
+			Level:     getMinShowingLogLevel(cfg),
 			AddSource: cfg.Log.ShowSource,
 		})),
 	}
+}
+
+func getMinShowingLogLevel(cfg *config.Config) slog.Level {
+	level := slog.LevelInfo
+	switch cfg.Log.Level {
+	case "debug":
+		level = slog.LevelDebug
+	case "error":
+		level = slog.LevelError
+	case "warn", "warning":
+		level = slog.LevelWarn
+	}
+	return level
 }
 
 func (l *AppLogger) Info(format string, args ...any) {
