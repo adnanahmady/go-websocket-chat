@@ -9,6 +9,7 @@ import (
 )
 
 type Logger interface {
+	New(fields ...any) Logger
 	Info(format string, args ...any)
 	Error(format string, args ...any)
 	Debug(format string, args ...any)
@@ -18,16 +19,23 @@ type Logger interface {
 var _ Logger = (*AppLogger)(nil)
 
 type AppLogger struct {
-	lgr *slog.Logger
+	fields []any
+	lgr    *slog.Logger
+	cfg    *config.Config
 }
 
 func NewAppLogger(cfg *config.Config) *AppLogger {
 	return &AppLogger{
-		lgr: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level:     getMinShowingLogLevel(cfg),
-			AddSource: cfg.Log.ShowSource,
-		})),
+		lgr: newSlogLogger(cfg),
+		cfg: cfg,
 	}
+}
+
+func newSlogLogger(cfg *config.Config) *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     getMinShowingLogLevel(cfg),
+		AddSource: cfg.Log.ShowSource,
+	}))
 }
 
 func getMinShowingLogLevel(cfg *config.Config) slog.Level {
@@ -41,6 +49,14 @@ func getMinShowingLogLevel(cfg *config.Config) slog.Level {
 		level = slog.LevelWarn
 	}
 	return level
+}
+
+func (l *AppLogger) New(fields ...any) Logger {
+	return &AppLogger{
+		fields: fields,
+		lgr:    newSlogLogger(l.cfg).With(fields...),
+		cfg:    l.cfg,
+	}
 }
 
 func (l *AppLogger) Info(format string, args ...any) {
