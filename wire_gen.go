@@ -11,6 +11,7 @@ import (
 	"github.com/adnanahmady/go-websocket-chat/internal/presentation"
 	"github.com/adnanahmady/go-websocket-chat/pkg/applog"
 	"github.com/adnanahmady/go-websocket-chat/pkg/request"
+	"github.com/adnanahmady/go-websocket-chat/pkg/websocket"
 	"github.com/google/wire"
 )
 
@@ -20,13 +21,15 @@ func WireUpApp() (*App, error) {
 	configConfig := config.GetConfig()
 	appLogger := applog.NewAppLogger(configConfig)
 	server := request.NewServer(configConfig, appLogger)
-	handler := presentation.NewHandler()
+	hub := websocket.NewHub(appLogger)
+	handler := presentation.NewHandler(hub)
 	routes := presentation.NewRoutes(server, handler)
 	app := &App{
 		Config: configConfig,
 		Logger: appLogger,
 		Server: server,
 		Routes: routes,
+		Hub:    hub,
 	}
 	return app, nil
 }
@@ -38,6 +41,7 @@ type App struct {
 	Logger *applog.AppLogger
 	Server *request.Server
 	Routes *presentation.Routes
+	Hub    *websocket.Hub
 }
 
-var AppSet = wire.NewSet(applog.NewAppLogger, wire.Bind(new(applog.Logger), new(*applog.AppLogger)), config.GetConfig, request.NewServer, wire.Bind(new(request.Router), new(*request.Server)), presentation.NewHandler, presentation.NewRoutes, wire.Struct(new(App), "*"))
+var AppSet = wire.NewSet(applog.NewAppLogger, wire.Bind(new(applog.Logger), new(*applog.AppLogger)), config.GetConfig, request.NewServer, wire.Bind(new(request.Router), new(*request.Server)), websocket.NewHub, presentation.NewHandler, presentation.NewRoutes, wire.Struct(new(App), "*"))

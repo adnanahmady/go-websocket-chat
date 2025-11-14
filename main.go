@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -8,8 +9,9 @@ import (
 )
 
 func main() {
-	termChan := make(chan os.Signal, 1)
-	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	ps, err := WireUpApp()
 	if err != nil {
@@ -24,9 +26,11 @@ func main() {
 	ps.Logger.Info("Host: %s", ps.Config.App.Host)
 	ps.Logger.Info("Env: %s", ps.Config.App.Env)
 	go runServer(ps)
+	go ps.Hub.Run(ctx)
 
-	<-termChan
-	signal.Stop(termChan)
+	<-ctx.Done()
+	stop()
+
 	if err := ps.Server.Shutdown(); err != nil {
 		os.Exit(1)
 	}

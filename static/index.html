@@ -51,10 +51,10 @@
         <div class="row flex-grow border-secondary-100 border-1 p-4 rounded-md mb-2 overflow-y-auto">
             <div class="col-12">
                 <template x-for="msg in messages" :key="msg.id">
-                    <div class="flex flex-row mb-2" :class="{ 'flex-row-reverse': msg.operator === user }">
-                        <span x-text="msg.operator" class="text-secondary-500 font-bold text-xs my-auto"></span>
-                        <span x-text="msg.message" class="text-dark-500 text-sm px-2 py-1 rounded my-auto mx-2 w-1/4"
-                            :class="msg.operator === user ? 'text-light-500 bg-info' : 'text-dark-900 bg-light'">
+                    <div class="flex flex-row mb-2" :class="{ 'flex-row-reverse': msg.sender.name === user }">
+                        <span x-text="msg.sender.name" class="text-secondary-500 font-bold text-xs my-auto"></span>
+                        <span x-html="msg.payload" class="text-dark-500 text-sm px-2 py-1 rounded my-auto mx-2 w-1/4"
+                            :class="msg.sender.name === user ? 'text-light-500 bg-info' : 'text-dark-900 bg-light'">
                         </span>
                     </div>
                 </template>
@@ -64,7 +64,7 @@
             <input autofocus type="text" x-model="message" placeholder="Type your message..." @keyup.enter="sendMessage"
                 class="border w-full border-gray-200 rounded-md m-2 p-2 flex-grow text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500" />
             <button @click="sendMessage"
-                class="bg-primary-500 text-white px-4 py-2 m-2 cursor-pointer rounded-md hover:bg-primary-600 transition-colors duration-150">
+                class="bg-primary text-white px-4 py-2 m-2 cursor-pointer rounded-md hover:bg-primary-600 transition-colors duration-150">
                 Send
             </button>
         </div>
@@ -86,21 +86,27 @@
             ws: null,
 
             init() {
-                this.ws = new WebSocket("ws://localhost:8080/ws");
+                const host = location.host
+                if (!host) {
+                    alert("You need to access this page using application")
+                    return
+                }
+                this.ws = new WebSocket(`ws://${host}/ws?sender=${this.user}`);
                 this.ws.onopen = () => {
                     console.log("WebSocket connected");
                     this.messages.push({
                         id: this.counter,
-                        operator: "System",
-                        message: `Dear ${this.user}, you're joined the chat`
+                        sender: {name: "System"},
+                        payload: `Dear ${this.user}, you're joined the chat`
                     });
                 }
                 this.ws.onmessage = (event) => {
                     const message = JSON.parse(event.data);
-                    console.log("message received:", message);
-                    this.counter++;
-                    message.id = this.counter;
-                    message.operator = message.operator === this.user ? "You" : message.operator;
+                    const sender = message.sender?.name
+                    message.sender.name = sender === this.user ? "You" : sender;
+                    if (message.type === "joined") {
+                        message.payload = `<strong>${sender}</strong> joined the room`;
+                    }
                     this.messages.push(message);
                 }
                 this.ws.onclose = (event) => {
@@ -108,8 +114,8 @@
                     this.counter++;
                     this.messages.push({
                         id: this.counter,
-                        operator: "System",
-                        message: `Dear ${this.user}, you left the chat`
+                        sender: {name: "System"},
+                        payload: `Dear ${this.user}, you left the chat`
                     });
                 }
                 this.ws.onerror = (event) => {
@@ -117,19 +123,23 @@
                     this.counter++;
                     this.messages.push({
                         id: this.counter,
-                        operator: "System",
-                        message: `Dear ${this.user}, there's an error in the chat`
+                        sender: {name: "System"},
+                        payload: `Dear ${this.user}, there's an error in the chat`
                     });
                 }
             },
 
             sendMessage() {
+                if (this.message.trim().length === 0) {
+                    return
+                }
                 this.counter++;
-                this.messages.push({
-                    id: this.counter,
-                    operator: this.user,
-                    message: this.message
-                });
+                const msg = {
+                    sender: {name: this.user},
+                    payload: this.message
+                }
+                this.messages.push({ id: this.counter, ...msg });
+                this.ws.send(JSON.stringify(msg))
                 this.message = '';
             }
         }

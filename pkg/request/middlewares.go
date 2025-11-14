@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	loggerKey  = &struct{ uint8 }{}
-	requestKey = &struct{ uint8 }{}
+	loggerKey   = &struct{ uint8 }{}
+	requestKey  = &struct{ uint8 }{}
+	userNameKey = &struct{ uint8 }{}
 )
 
 func logMiddleware(logger applog.Logger) gin.HandlerFunc {
@@ -17,7 +18,7 @@ func logMiddleware(logger applog.Logger) gin.HandlerFunc {
 		ctx := c.Request.Context()
 		ctx = SetLogger(ctx, logger.New())
 		ctx = SetRequestID(ctx, id)
-		c.Request.WithContext(ctx)
+		c.Request = c.Request.WithContext(ctx)
 		lgr := GetLogger(ctx)
 		lgr.Info("Incoming request")
 		lgr.Info("Request URL: %s", c.Request.URL.Path)

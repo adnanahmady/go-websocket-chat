@@ -13,8 +13,8 @@ func NewRoutes(
 ) *Routes {
 	engine := router.GetEngine()
 	engine.GET("/", handler.HomePage)
-	engine.POST("/ws", handler.WsEndpoint)
-	engine.StaticFS("/static", http.Dir("static"))
+	engine.GET("/ws", handler.WsEndpoint)
+	engine.StaticFS("/chat", http.Dir("static"))
 
 	return &Routes{}
 }

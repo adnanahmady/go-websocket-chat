@@ -30,7 +30,7 @@ func NewServer(
 	return &Server{
 		cfg:    cfg,
 		logger: logger,
-		engine: gin.Default(),
+		engine: buildFramework(logger),
 		server: &http.Server{},
 	}
 }
@@ -39,14 +39,16 @@ func (s *Server) GetEngine() *gin.Engine {
 	return s.engine
 }
 
-func (s *Server) prepare() {
-	s.engine.Use(gin.Recovery())
-	s.engine.Use(logMiddleware(s.logger))
+func buildFramework(logger applog.Logger) *gin.Engine {
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+	engine.Use(logMiddleware(logger))
+	return engine
 }
 
 func (s *Server) Start() error {
 	host := fmt.Sprintf("%s:%d", s.cfg.App.Host, s.cfg.App.Port)
-	s.server.Handler = s.engine
+	s.server.Handler = s.engine.Handler()
 	s.server.Addr = host
 	s.logger.Info("starting server on (%s)", host)
 	if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
