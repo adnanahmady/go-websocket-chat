@@ -106,6 +106,8 @@
                     message.sender.name = sender === this.user ? "You" : sender;
                     if (message.type === "joined") {
                         message.payload = `<strong>${sender}</strong> joined the room`;
+                    } else if (message.type === "leave") {
+                        message.payload = `<strong>${sender}</strong> left the room`;
                     }
                     this.messages.push(message);
                 }

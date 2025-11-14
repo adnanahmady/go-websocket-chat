@@ -39,14 +39,13 @@ func (c *Client) Register() {
 func (c *Client) Unregister() {
 	lgr := request.GetLogger(c.ctx)
 
+	c.hub.unregister <- c
+
 	msgType := websocket.CloseNormalClosure
 	msg := websocket.FormatCloseMessage(msgType, "Server closed connection")
 	if err := c.conn.WriteMessage(websocket.CloseMessage, msg); err != nil {
 		lgr.Error("failed to send close message to client", "error", err)
-		return
 	}
-
-	c.hub.unregister <- c
 
 	if err := c.conn.Close(); err != nil {
 		lgr.Error("failed to unregister client", "error", err)
@@ -75,11 +74,11 @@ func (c *Client) Read() {
 			var closeErr *websocket.CloseError
 			if errors.As(err, &closeErr) {
 				lgr.Error("close error occurred", "error", err)
-				break
+				return
 			}
 
 			lgr.Error("failed to read message", "error", err)
-			break
+			return
 		}
 
 		if msg.Payload == nil || msg.Payload == "" {

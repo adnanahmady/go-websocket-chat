@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"github.com/adnanahmady/go-websocket-chat/pkg/applog"
+	"github.com/google/uuid"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -40,9 +41,9 @@ func (h *Hub) RegisterClient(client *Client) {
 	}
 	h.clients[client] = client
 	h.handleBroadcast(Message{
-		Type:    "joined",
-		Payload: "",
-		Sender:  Sender{Name: client.name},
+		ID:     uuid.NewString(),
+		Type:   "joined",
+		Sender: Sender{Name: client.name},
 	})
 }
 
@@ -51,6 +52,11 @@ func (h *Hub) UnregisterClient(client *Client) {
 		return
 	}
 	delete(h.clients, client)
+	h.handleBroadcast(Message{
+		ID:     uuid.NewString(),
+		Type:   "leave",
+		Sender: Sender{Name: client.name},
+	})
 }
 
 func (h *Hub) Upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
