@@ -44,13 +44,13 @@ func getCallerPath() string {
 			string(debug.Stack()),
 		)
 	}
-	return currentPath
+	return currentPath + "/../.."
 }
 
 func readConfigFile() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yml")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(getCallerPath())
 
 	if err := viper.ReadInConfig(); err != nil {
 		if errors.Is(err, viper.ConfigFileNotFoundError{}) {

@@ -42,7 +42,7 @@ func (h *Hub) RegisterClient(client *Client) {
 	h.clients[client] = client
 	h.handleBroadcast(Message{
 		ID:     uuid.NewString(),
-		Type:   "joined",
+		Type:   "join",
 		Sender: Sender{Name: client.name},
 	})
 }
@@ -86,6 +86,9 @@ func (h *Hub) Run(ctx context.Context) {
 }
 
 func (h *Hub) handleBroadcast(msg Message) {
+	if msg.Type != "join" && msg.Type != "leave" {
+		msg.Type = "talk"
+	}
 	for _, c := range h.clients {
 		if c.name == msg.Sender.Name {
 			continue

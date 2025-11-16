@@ -8,3 +8,6 @@ fix:
 	@go vet .
 	@gofmt -d -w .
 
+test:
+	@go clean -testcache
+	@go test -timeout 5s -failfast ./...

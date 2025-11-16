@@ -14,3 +14,11 @@ make run
 You can check the application behaviour using prepared
 small frontend application provided in `localhost:5000/chat`
 url.
+
+## Test
+
+You can run tests using this command
+
+```shell
+make test
+```

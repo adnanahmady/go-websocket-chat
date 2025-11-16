@@ -104,7 +104,7 @@
                     const message = JSON.parse(event.data);
                     const sender = message.sender?.name
                     message.sender.name = sender === this.user ? "You" : sender;
-                    if (message.type === "joined") {
+                    if (message.type === "join") {
                         message.payload = `<strong>${sender}</strong> joined the room`;
                     } else if (message.type === "leave") {
                         message.payload = `<strong>${sender}</strong> left the room`;

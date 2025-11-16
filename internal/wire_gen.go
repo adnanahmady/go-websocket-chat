@@ -4,7 +4,7 @@
 //go:build !wireinject
 // +build !wireinject
 
-package main
+package internal
 
 import (
 	"github.com/adnanahmady/go-websocket-chat/config"

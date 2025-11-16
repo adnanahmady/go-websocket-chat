@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/adnanahmady/go-websocket-chat/internal"
 	"log"
 	"os"
 	"os/signal"
@@ -13,7 +14,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	ps, err := WireUpApp()
+	ps, err := internal.WireUpApp()
 	if err != nil {
 		log.Fatalf("failed to wire up the application dependencies")
 	}
@@ -37,7 +38,7 @@ func main() {
 	ps.Logger.Info("Application stopped")
 }
 
-func runServer(ps *App) {
+func runServer(ps *internal.App) {
 	if err := ps.Server.Start(); err != nil {
 		os.Exit(1)
 	}
